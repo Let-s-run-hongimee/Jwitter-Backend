@@ -3,10 +3,16 @@ from sqlalchemy.orm import relationship
 
 from .database import Base
 
+class APIKey(Base):
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    hashed_key = Column(String, unique=True, index=True)
+
 class User(Base):
     __tablename__ = "users"
 
-    userId = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
@@ -18,17 +24,18 @@ class User(Base):
 class Tweet(Base):
     __tablename__ = "tweets"
 
-    tweetId = Column(Integer, primary_key=True, index=True)
+    tweet_id = Column(Integer, primary_key=True, index=True)
     content = Column(String)
-    userId = Column(Integer, ForeignKey("users.userid"))
-
+    userId = Column(Integer, ForeignKey("users.user_id"))
+    
+    photos = relationship("Photo", back_populates="tweet")
     user = relationship("User", back_populates="tweets")
 
 class Photo(Base):
     __tablename__ = "photos"
 
-    photoId = Column(Integer, primary_key=True, index=True)
-    tweetId = Column(Integer, ForeignKey("tweets.tweetid"))
+    photo_id = Column(Integer, primary_key=True, index=True)
+    tweet_id = Column(Integer, ForeignKey("tweets.tweet_id"))
     photoUrl = Column(String)
 
     tweet = relationship("Tweet", back_populates="photos")

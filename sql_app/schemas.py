@@ -1,6 +1,18 @@
 from typing import List, Optional
 from pydantic import BaseModel
 
+class APIKeyBase(BaseModel):
+    key: Optional[str] = None
+
+class APIKeyCreate(APIKeyBase):
+    key: str
+
+class APIKey(APIKeyBase):
+    id: int
+    hashed_key: str
+
+    class Config:
+        orm_mode = True
 
 class TweetBase(BaseModel):
     content: Optional[str] = None
