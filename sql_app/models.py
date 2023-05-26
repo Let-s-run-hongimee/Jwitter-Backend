@@ -3,12 +3,6 @@ from sqlalchemy.orm import relationship
 
 from .database import Base
 
-class APIKey(Base):
-    __tablename__ = "api_keys"
-
-    id = Column(Integer, primary_key=True, index=True)
-    hashed_key = Column(String, unique=True, index=True)
-
 class User(Base):
     __tablename__ = "users"
 
@@ -16,10 +10,20 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
     is_auth_user = Column(Boolean, default=False)
+    is_admin = Column(Boolean, default=False)
 
     tweets = relationship("Tweet", back_populates="user")
+    api_key = relationship("APIKey", back_populates="user")
+
+class APIKey(Base):
+    __tablename__ = "api_keys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    userId = Column(Integer, ForeignKey("users.user_id"))
+    hashed_key = Column(String, unique=True, index=True)
+
+    user = relationship("User", back_populates="api_key")
 
 class Tweet(Base):
     __tablename__ = "tweets"

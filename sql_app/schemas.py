@@ -2,25 +2,16 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 class APIKeyBase(BaseModel):
-    key: Optional[str] = None
+    id: Optional[str] = None
 
-class APIKeyCreate(APIKeyBase):
-    key: str
-
-class APIKey(APIKeyBase):
-    id: int
-    hashed_key: str
-
-    class Config:
-        orm_mode = True
+class Resopons_APIKey(BaseModel):
+    api_key: str
 
 class TweetBase(BaseModel):
     content: Optional[str] = None
 
-
 class TweetCreate(TweetBase):
     content: str
-
 
 class Tweet(TweetBase):
     tweetId: int
@@ -33,15 +24,20 @@ class Tweet(TweetBase):
 class UserBase(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
-    is_active: Optional[bool] = None
-    is_auth_user: Optional[bool] = None
 
+class UserAdminVerify(UserBase):
+    username: str
+    email: str
+    password: str
 
 class UserCreate(UserBase):
     username: str
     email: str
     password: str
 
+class UserLogin(BaseModel):
+    id: str
+    password: str
 
 class User(UserBase):
     userId: int

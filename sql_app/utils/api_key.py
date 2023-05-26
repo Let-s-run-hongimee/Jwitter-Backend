@@ -12,30 +12,18 @@ def get_db():
     finally:
         db.close()
 
-security = HTTPBasic()
-
 async def verify_api_key(request: Request, db: Session = Depends(get_db)):
     api_key = request.headers.get("X-API-KEY")
-    if api_key is None:
+    username = request.headers.get("X-USER-NAME")
+    if api_key is None or username is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API Key header is missing",
+            detail="API Key or User id header is missing",
         )
-    if not await crud.is_api_key_valid(db, api_key):
+    if not await crud.is_api_key_valid(db, api_key, username):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API Key",
         )
     return api_key
-
-def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = secrets.compare_digest(credentials.username, "admin")
-    correct_password = secrets.compare_digest(credentials.password, "password")
-    if not (correct_username and correct_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials
 
