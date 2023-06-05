@@ -14,16 +14,6 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
 
     tweets = relationship("Tweet", back_populates="user")
-    api_key = relationship("APIKey", back_populates="user")
-
-class APIKey(Base):
-    __tablename__ = "api_keys"
-
-    id = Column(Integer, primary_key=True, index=True)
-    userId = Column(Integer, ForeignKey("users.user_id"))
-    hashed_key = Column(String, unique=True, index=True)
-
-    user = relationship("User", back_populates="api_key")
 
 class Tweet(Base):
     __tablename__ = "tweets"
