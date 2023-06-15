@@ -3,7 +3,7 @@ from pydantic import BaseModel
 
 
 class Settings(BaseModel):
-    authjwt_secret_key: str = "secret"
+    authjwt_secret_key: str = "hongimee_secret_key"
 
 class TweetBase(BaseModel):
     content: Optional[str] = None
@@ -54,3 +54,7 @@ class Photo(PhotoBase):
 
     class Config:
         orm_mode = True
+        
+class logout(BaseModel):
+    access_token: str
+    refresh_token: str
