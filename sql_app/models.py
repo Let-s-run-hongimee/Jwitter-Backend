@@ -33,3 +33,12 @@ class Photo(Base):
     photoUrl = Column(String)
 
     tweet = relationship("Tweet", back_populates="photos")
+    
+class JwtToken(Base):
+    __tablename__ = "jwttokens"
+
+    jwttoken_id = Column(Integer, primary_key=True, index=True)
+    refresh_token = Column(String, unique=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"))
+
+    user = relationship("User", back_populates="jwttokens")

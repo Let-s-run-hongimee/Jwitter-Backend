@@ -2,6 +2,21 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from .utils import hashing
 
+async def delete_refresh_token(db: Session, user: str):
+    db_user = await is_username_taken(db, user)
+    if not db_user:
+        db_user = await is_email_taken(db, user)
+        db.query(models.JwtToken).filter(models.JwtToken.user_id == db_user.user_id).delete()
+        db.commit()
+        return True
+    return False
+
+async def add_refresh_token(db: Session, refresh_token: str):
+    db_refresh_token = models.JwtToken(refresh_token=refresh_token)
+    db.add(db_refresh_token)
+    db.commit()
+    db.refresh(db_refresh_token)
+    return db_refresh_token
 
 # Create User (Register)
 async def create_user(db: Session, user: schemas.UserCreate):

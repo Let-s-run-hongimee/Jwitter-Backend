@@ -19,6 +19,8 @@ def get_db():
     finally:
         db.close()
 
+
+
 @app.post("/user/signup", tags=["user"])
 async def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     if await crud.is_username_taken(db, username=user.username):
@@ -38,7 +40,23 @@ async def login(user: schemas.UserLogin, db: Session = Depends(get_db), Authoriz
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login failed")
     
     access_token = Authorize.create_access_token(subject=user.id)
-    return {"access_token": access_token}
+    refresh_token = Authorize.create_refresh_token(subject=user.id)
+    if not access_token or not refresh_token:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Token not created")
+    
+    await crud.add_refresh_token(db=db, refresh_token=refresh_token)
+    
+    return {"access_token": access_token, "refresh_token": refresh_token}
+
+#logout
+@app.delete("/user/logout", tags=["user"])
+async def logout(db: Session = Depends(get_db), Authorize: AuthJWT = Depends()):
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    if await crud.delete_refresh_token(db=db, user=current_user):
+        return {"msg": "Successfully logged out"}
+    # 예외 처리 : delete_refresh_token() 함수가 정상적으로 실행되지 않았을 때
+    raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Logout failed")
 
 # Create Tweet
 @app.post("/tweet/create", tags=["protected"])
