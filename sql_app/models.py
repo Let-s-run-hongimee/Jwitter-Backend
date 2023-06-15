@@ -14,6 +14,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
 
     tweets = relationship("Tweet", back_populates="user")
+    jwttokens = relationship("JwtToken", back_populates="user")
 
 class Tweet(Base):
     __tablename__ = "tweets"
