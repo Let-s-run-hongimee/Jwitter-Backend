@@ -1,7 +1,6 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-
-from .database import Base
+from app.db.session import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -15,31 +14,12 @@ class User(Base):
 
     tweets = relationship("Tweet", back_populates="user")
     jwttokens = relationship("JwtToken", back_populates="user")
-
-class Tweet(Base):
-    __tablename__ = "tweets"
-
-    tweet_id = Column(Integer, primary_key=True, index=True)
-    content = Column(String)
-    userId = Column(Integer, ForeignKey("users.user_id"))
-    
-    photos = relationship("Photo", back_populates="tweet")
-    user = relationship("User", back_populates="tweets")
-
-class Photo(Base):
-    __tablename__ = "photos"
-
-    photo_id = Column(Integer, primary_key=True, index=True)
-    tweet_id = Column(Integer, ForeignKey("tweets.tweet_id"))
-    photoUrl = Column(String)
-
-    tweet = relationship("Tweet", back_populates="photos")
     
 class JwtToken(Base):
     __tablename__ = "jwttokens"
 
     jwttoken_id = Column(Integer, primary_key=True, index=True)
     refresh_token = Column(String, unique=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"))
+    user_id = Column(Integer, ForeignKey("users.user_id"), unique=True, index=True)
 
     user = relationship("User", back_populates="jwttokens")
