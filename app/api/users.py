@@ -34,3 +34,19 @@ async def login(request: Request, user: UserLogin, db: Session = Depends(get_db)
     await delete.delete_refresh_token_by_userId(db, user_db.user_id)
     await create.add_refresh_token(db, refresh_token, user_db.user_id)
     return {"access_token": access_token, "refresh_token": refresh_token}
+
+@router.get("/me")
+async def get_current_user(request: Request, db: Session = Depends(get_db)):
+    Authorize: AuthJWT = request.state.auth # Load AuthJWT
+    Authorize.jwt_required()
+    current_user = int(Authorize.get_jwt_subject())
+
+    user_db = await read.get_user_by_user_id(db, current_user)
+
+    if not user_db:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "username" : user_db.username,
+        "email" : user_db.email,
+        "is_auth_user" : user_db.is_auth_user
+    }

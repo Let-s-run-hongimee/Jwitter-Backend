@@ -30,7 +30,7 @@ async def create_user(db: Session, user: user_schema.UserCreate):
     # 중복이 아니면 DB에 추가
     if not existing_user:
         hashed_password = Hasher.hashing(user.password)
-        db_user = user_model.User(email=user.email, username=user.username, hashed_password=hashed_password)
+        db_user = user_model.User(email=user.email, username=user.username, nickname=user.nickname, hashed_password=hashed_password)
         return await add_to_db(db, db_user)
     return False
 

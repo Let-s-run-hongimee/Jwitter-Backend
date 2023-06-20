@@ -29,3 +29,18 @@ async def login_verify(db: Session, user: user_schema.UserLogin):
         if Hasher.verify_hashed_text(plain_password=user.password, hashed_text=db_user.hashed_password):
             return db_user
     return False
+
+async def get_user_by_user_id(db: Session, user_id: int):
+    user = db.query(user_model.User).filter(user_model.User.id == user_id).first()
+    if user:
+        return user
+    return False
+
+async def get_user_tweets(db: Session, user_id: int, skip: int = 0, limit: int = 10):
+    return (
+        db.query(tweet_model.Tweet)
+        .filter(tweet_model.Tweet.user_id == user_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )

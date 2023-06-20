@@ -6,7 +6,7 @@ class Tweet(Base):
     __tablename__ = "tweets"
 
     tweet_id = Column(Integer, primary_key=True, index=True)
-    userId = Column(Integer, ForeignKey("users.user_id"))
+    user_id = Column(Integer, ForeignKey("users.user_id"))
     content = Column(String)
     
     photos = relationship("Photo", back_populates="tweet")
