@@ -2,19 +2,24 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 # Tweet related schemas
-class TweetBase(BaseModel):
+
+class TweetUpdate(BaseModel):
+    tweet_id: int
     content: Optional[str] = None
 
-class TweetCreate(TweetBase):
-    pass
+class TweetCreate(BaseModel):
+    content: Optional[str] = None
 
-class Tweet(TweetBase):
+class Tweet(BaseModel):
     tweet_id: int
     user_id: int
     username: str
+    content: Optional[str] = None
+    heart: int
+    retweet: int
 
     class Config:
         orm_mode = True
 
-class TweetResponse(TweetBase):
-    tweets: List[Tweet] = []
+class TweetResponse(BaseModel):
+    tweets: List[Tweet]

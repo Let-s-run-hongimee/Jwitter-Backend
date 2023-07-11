@@ -5,18 +5,29 @@ from app.db.session import Base
 class Tweet(Base):
     __tablename__ = "tweets"
 
-    tweet_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"))
+    id = Column(Integer, primary_key=True, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"))
     content = Column(String)
-    
-    photos = relationship("Photo", back_populates="tweet")
+
     user = relationship("User", back_populates="tweets")
 
-class Photo(Base):
-    __tablename__ = "photos"
+class Heart(Base):
+    __tablename__ = "hearts"
 
-    photo_id = Column(Integer, primary_key=True, index=True)
-    tweet_id = Column(Integer, ForeignKey("tweets.tweet_id"))
-    photoUrl = Column(String)
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    tweet_id = Column(Integer, ForeignKey("tweets.id"))
 
-    tweet = relationship("Tweet", back_populates="photos")
+    user = relationship("User", backref="hearts")
+    tweet = relationship("Tweet", backref="hearts")
+
+class Retweet(Base):
+    __tablename__ = "retweets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    tweet_id = Column(Integer, ForeignKey("tweets.id"))
+
+    user = relationship("User", backref="retweets")
+    tweet = relationship("Tweet", backref="retweets")
+
