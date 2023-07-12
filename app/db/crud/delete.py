@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session
-from app.db.schemas import jwt_schema, user_schema, tweet_schema
 from app.db.models import tweet_model, user_model
-from app.utils.hash import Hasher
-from app.db.crud.read import get_user_by_login_id
+from sqlalchemy import and_
+from fastapi import HTTPException
+from app.db.crud.read import get_user_by_user_id
 
 async def delete_refresh_token_by_userId(db: Session, user_id: int):
-    existing_token = db.query(user_model.JwtToken).filter_by(user_id=user_id).first()
+    existing_token = db.query(user_model.JwtToken).filter(user_model.JwtToken.user_id == user_id).first()
     if existing_token:
         db.delete(existing_token)
         db.commit()
@@ -14,33 +14,46 @@ async def delete_refresh_token_by_userId(db: Session, user_id: int):
 
 async def delete_tweet(db: Session, tweet_id: int, user_id: int):
     existing_tweet = db.query(tweet_model.Tweet).filter_by(id=tweet_id).first()
-    if existing_tweet:
+    if existing_tweet and existing_tweet.author_id == user_id:
         db.delete(existing_tweet)
         db.commit()
         return True
     return False
 
-async def unfollow_user(db: Session, user_id: int, followed_user_id: int):
-    """
-    User를 언팔로우하는 함수 
-
-    Args:
-        db (Session): DB Session
-        user_id (int): 언팔로우를 하는 유저의 user_id
-        following_id (int): 언팔로우를 당하는 유저의 user_id
-        
-    Returns:
-        None
-    """
+async def unfollow_user(db: Session, user_id: int, followed_id: int):
+    # user_id : 언팔로우 하는 사람 : follower
+    # followed_id : 언팔로우 당하는 사람 : following
+    if await get_user_by_user_id(db, user_id):
+        print(1)
+        is_followed = db.query(user_model.Follow).filter(and_(user_model.Follow.follower_id == user_id, user_model.Follow.followed_id == followed_id)).first()
+        print(is_followed)
+        if is_followed:
+            db.delete(is_followed)
+            db.commit()
+            return True
+        else:
+            raise HTTPException(status_code=409, detail="Not followed")
+    else:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    # 두 테이블에서 각각 한개씩 데이터를 없애야함.(테이블 : user_model.Followings, user_model.Followers)
-    # user_model.Followings 테이블에서 언팔로우를 하는 유저의 데이터를 찾아서 삭제
-    existing_following = db.query(user_model.Followings).filter_by(user_id=user_id, following_id=followed_user_id).first()
-    # user_model.Followers 테이블에서 언팔로우를 당하는 유저의 데이터를 찾아서 삭제
-    existing_follower = db.query(user_model.Followers).filter_by(user_id=followed_user_id, follower_id=user_id).first()
-    if existing_following and existing_follower:
-        db.delete(existing_following)
-        db.delete(existing_follower)
-        db.commit()
-        return True
-    return False
+async def delete_heart(db: Session, tweet_id: int, user_id: int):
+    is_tweet = db.query(tweet_model.Tweet).filter(tweet_model.Tweet.id == tweet_id).first()
+    if is_tweet:
+        is_hearted = db.query(tweet_model.Heart).filter(and_(tweet_model.Heart.user_id == user_id, tweet_model.Heart.tweet_id == tweet_id)).first()
+        if is_hearted:
+            db.delete(is_hearted)
+            db.commit()
+            return True
+        else:
+            raise HTTPException(status_code=409, detail="Not hearted")
+
+async def delete_retweet(db: Session, tweet_id: int, user_id: int):
+    is_tweet = db.query(tweet_model.Tweet).filter(tweet_model.Tweet.id == tweet_id).first()
+    if is_tweet:
+        is_retweeted = db.query(tweet_model.Retweet).filter(and_(tweet_model.Retweet.user_id == user_id, tweet_model.Retweet.tweet_id == tweet_id)).first()
+        if is_retweeted:
+            db.delete(is_retweeted)
+            db.commit()
+            return True
+        else:
+            raise HTTPException(status_code=409, detail="Not retweeted")

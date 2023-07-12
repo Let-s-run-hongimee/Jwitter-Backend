@@ -1,9 +1,10 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from app.db.schemas import user_schema, tweet_schema
 from app.db.models import tweet_model, user_model
 from app.utils.hash import Hasher
-from app.db.crud.read import get_user_by_login_id
+from app.db.crud.read import get_user_by_user_id
 
 async def add_to_db(db: Session, instance):
     db.add(instance)
@@ -38,23 +39,41 @@ async def create_tweet(db: Session, content: str, user_id: int):
         return db_tweet
     return False
 
-async def follow_user(db: Session, user_id: int, following_id: int):
-    """
-    User를 팔로우하는 함수
+async def follow_user(db: Session, user_id: int, follow_id: int):
+    # user_id : 팔로우 하는 사람 : follower
+    # follow_id : 팔로우 당하는 사람 : following
+    if await get_user_by_user_id(db, user_id):
+        is_followed = db.query(user_model.Follow).filter(and_(user_model.Follow.follower_id == user_id, user_model.Follow.followed_id == follow_id)).first()
+        print(is_followed)
+        if is_followed:
+            raise HTTPException(status_code=409, detail="Already followed")
+        else:
+            db_follow = user_model.Follow(follower_id=user_id, followed_id=follow_id)
+            if await add_to_db(db, db_follow):
+                return db_follow
+    else:
+        raise HTTPException(status_code=404, detail="User not found")
     
-    Args:
-        db (Session): DB Session
-        user_id (int): 팔로우를 하는 유저의 user_id
-        following_id (int): 팔로우를 당하는 유저의 user_id
-        
-    Returns:
-        None
-    """
-    db_following = user_model.Followings(user_id=user_id, following_id=following_id)
-    db_followers = user_model.Followers(user_id=following_id, follower_id=user_id)
-    db.add(db_followers)
-    db.add(db_following)
-    db.commit()
-    db.refresh(db_followers)
-    db.refresh(db_following)
-    return True
+async def add_heart(db: Session, tweet_id: int, user_id: int):
+    db_tweet = db.query(tweet_model.Tweet).filter(tweet_model.Tweet.id == tweet_id).first()
+    if db_tweet:
+        db_heart = db.query(tweet_model.Heart).filter(and_(tweet_model.Heart.tweet_id == tweet_id, tweet_model.Heart.user_id == user_id)).first()
+        if db_heart:
+            raise HTTPException(status_code=409, detail="Already hearted")
+        else:
+            db_heart = tweet_model.Heart(user_id=user_id, tweet_id=tweet_id)
+            return await add_to_db(db, db_heart)
+    else:
+        raise HTTPException(status_code=404, detail="Tweet not found")
+
+async def add_retweet(db: Session, tweet_id: int, user_id: int):
+    db_tweet = db.query(tweet_model.Tweet).filter(tweet_model.Tweet.id == tweet_id).first()
+    if db_tweet:
+        db_retweet = db.query(tweet_model.Retweet).filter(and_(tweet_model.Retweet.tweet_id == tweet_id, tweet_model.Retweet.user_id == user_id)).first()
+        if db_retweet:
+            raise HTTPException(status_code=409, detail="Already retweeted")
+        else:
+            db_retweet = tweet_model.Retweet(user_id=user_id, tweet_id=tweet_id)
+            return await add_to_db(db, db_retweet)
+    else:
+        raise HTTPException(status_code=404, detail="Tweet not found")

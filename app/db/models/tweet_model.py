@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.db.session import Base
 
@@ -9,6 +9,8 @@ class Tweet(Base):
     author_id = Column(Integer, ForeignKey("users.id"))
     content = Column(String)
 
+    hearts = relationship("Heart", back_populates="tweet")
+    retweets = relationship("Retweet", back_populates="tweet")
     user = relationship("User", back_populates="tweets")
 
 class Heart(Base):
@@ -18,8 +20,7 @@ class Heart(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     tweet_id = Column(Integer, ForeignKey("tweets.id"))
 
-    user = relationship("User", backref="hearts")
-    tweet = relationship("Tweet", backref="hearts")
+    tweet = relationship("Tweet", back_populates="hearts")
 
 class Retweet(Base):
     __tablename__ = "retweets"
@@ -28,6 +29,5 @@ class Retweet(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     tweet_id = Column(Integer, ForeignKey("tweets.id"))
 
-    user = relationship("User", backref="retweets")
-    tweet = relationship("Tweet", backref="retweets")
+    tweet = relationship("Tweet", back_populates="retweets")
 

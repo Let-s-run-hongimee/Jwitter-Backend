@@ -13,10 +13,11 @@ class TweetCreate(BaseModel):
 class Tweet(BaseModel):
     tweet_id: int
     user_id: int
+    nickname: str
     username: str
     content: Optional[str] = None
-    heart: int
-    retweet: int
+    hearts: int
+    retweets: int
 
     class Config:
         orm_mode = True
