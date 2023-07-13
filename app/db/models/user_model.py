@@ -5,8 +5,8 @@ from app.db.session import Base
 class Follow(Base):
     __tablename__ = "follow"
 
-    follower_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    followed_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    follower_id = Column(Integer, ForeignKey("users.id"), primary_key=True) # 팔로우 하는 사람
+    followed_id = Column(Integer, ForeignKey("users.id"), primary_key=True) # 팔로우 당하는 사람
 
     # 각각 follower 와 followed에 대한 relationship을 설정
     follower = relationship("User", foreign_keys=[follower_id], backref="following")

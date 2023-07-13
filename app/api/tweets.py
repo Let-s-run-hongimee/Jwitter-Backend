@@ -3,7 +3,8 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.schemas import tweet_schema, user_schema
-from app.db.crud import create, read, update, delete, the_algorithm
+from app.db.crud import create, read, update, delete
+from app.the_algorithm.the_algorithm import TheAlgorithm
 from app.utils.jwt import JWT
 from typing import List, Annotated
 
@@ -11,13 +12,30 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
 router = APIRouter()
 
-@router.get("/foryou", response_model=List[tweet_schema.TweetResponse])
+@router.get("/foryou")
 async def read_for_you_tweets(db: Session = Depends(get_db), token: Annotated[str, Depends(oauth2_scheme)] = None, skip: int = 0, limit: int = 10):
     subject = JWT.verify_access_token_and_get_sub(token)
-    tweets = the_algorithm.algorithm_1(db, subject, skip, limit)
-    if not tweets:
-        raise HTTPException(status_code=404, detail="No tweets found")
-    return tweets
+    tweets_db = await TheAlgorithm.Finish_algorithm(db, subject)
+    tweets = []
+    if tweets_db:
+        for tweet in tweets_db:
+            tweet = tweet_schema.Tweet(
+                tweet_id=tweet.id,
+                user_id=tweet.author_id,
+                nickname=tweet.user.nickname,
+                username=tweet.user.username,
+                content=tweet.content,
+                hearts=read.count_heart(db, tweet.id),
+                retweets=read.count_retweet(db, tweet.id)
+            )
+            tweets.append(tweet)
+
+        casting = tweet_schema.TweetResponse(
+            tweets=tweets
+        )
+        return casting
+    raise HTTPException(status_code=404, detail="No tweets found")
+    
 
 @router.get("/me", response_model=tweet_schema.TweetResponse)
 async def read_user_tweets(
@@ -45,10 +63,10 @@ async def read_user_tweets(
                 retweets=retweet_counts.get(tweet_db.id, 0)
             )
             tweets.append(tweet)
-    temp = tweet_schema.TweetResponse(
+    casting = tweet_schema.TweetResponse(
         tweets=tweets
     )
-    return temp
+    return casting
 
 
 @router.post("/create")

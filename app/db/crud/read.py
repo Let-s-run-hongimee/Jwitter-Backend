@@ -3,7 +3,8 @@ from app.db.schemas import user_schema
 from app.db.models import tweet_model, user_model
 from app.utils.hash import Hasher
 from sqlalchemy import func, or_
-from typing import List
+from typing import List, Union
+
 
 async def get_user_by_login_id(db: Session, login_id: str):
     """
@@ -49,9 +50,13 @@ async def get_tweets_from_user_id(db: Session, user_id: int, skip: int = 0, limi
         .all()
     )
 
-def count_hearts(db: Session, tweet_ids: List[int]):
+def count_hearts(db: Session, tweet_ids: Union[int, List[int]]):
+    if isinstance(tweet_ids, int):
+        tweet_ids = [tweet_ids]
+        
     results = db.query(tweet_model.Heart.tweet_id, func.count(tweet_model.Heart.id)).filter(tweet_model.Heart.tweet_id.in_(tweet_ids)).group_by(tweet_model.Heart.tweet_id).all()
     return dict(results)
+
 
 def count_retweets(db: Session, tweet_ids: List[int]):
     results = (
@@ -68,6 +73,17 @@ async def count_hearts_and_retweets(db: Session, tweet_ids: List[int]):
     heart_counts = count_hearts(db, tweet_ids)
     retweet_counts = count_retweets(db, tweet_ids)
     return heart_counts, retweet_counts
+
+def count_heart(db: Session, tweet_id: int):
+    return db.query(tweet_model.Heart).filter(tweet_model.Heart.tweet_id == tweet_id).count()
+
+def count_retweet(db: Session, tweet_id: int):
+    return db.query(tweet_model.Retweet).filter(tweet_model.Retweet.tweet_id == tweet_id).count()
+
+async def count_heart_and_retweet(db: Session, tweet_id: int):
+    heart_count = count_heart(db, tweet_id)
+    retweet_count = count_retweet(db, tweet_id)
+    return heart_count, retweet_count
 
 
 

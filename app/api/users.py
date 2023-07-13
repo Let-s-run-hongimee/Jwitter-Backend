@@ -4,13 +4,17 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.schemas.user_schema import UserCreate, UserLogin
-from app.db.crud import create, read, update, delete
+from app.db.crud import create, read, update, delete, for_add_data
 from app.utils.jwt import JWT
 from app.utils.utils import is_valid_email
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
 router = APIRouter()
+
+#@router.post("/create_data")
+#async def create_data(db: Session = Depends(get_db)):
+#    for_add_data.generate_user_data(db, 5000)
 
 @router.post("/signup")
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
